@@ -130,6 +130,21 @@
   animation: pulseRedGlow 1.2s infinite ease-in-out;
 }
 
+@keyframes pulseRedSoft {
+  0%, 100% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));
+  }
+  50% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.6));
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulseRedSoft 3.5s infinite ease-in-out;
+}
+
 /* Ticker Animation */
 @keyframes ticker {
   0% { transform: translateX(100%); }
