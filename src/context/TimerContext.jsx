@@ -1,0 +1,459 @@
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
+import { playMilestoneChime, playWarningBeep, playCompletionAlarm, playButtonSound } from '../utils/audioSynth';
+
+const TimerContext = createContext(null);
+
+const SYNC_CHANNEL_NAME = 'hackatronics_display_sync_channel';
+const STORAGE_KEY = 'hackatronics_display_state_v1';
+
+const DEFAULT_EVENT_INFO = {
+  title: 'HACKATRONICS',
+  edition: '2ND EDITION',
+  subtitle: '24-HOURS HACKATHON',
+  venue: 'NETHAJI AUDITORIUM, VIT CHENNAI',
+  date: '01.09.2026',
+  timeRange: '8 AM - 8 AM',
+  pillars: ['BUILD', 'INNOVATE', 'CREATE', 'DEPLOY']
+};
+
+const DEFAULT_QR_CODES = [
+  {
+    id: 'qr-1',
+    title: 'PROJECT SUBMISSION LINK',
+    url: 'https://hackatronics2026.devpost.com',
+    description: 'Scan to submit your final GitHub repo, project pitch, and demo video.',
+    active: false
+  },
+  {
+    id: 'qr-2',
+    title: 'HACKER DISCORD COMMUNITY',
+    url: 'https://discord.gg/hackatronics',
+    description: 'Scan to join the official Hacker Helpdesk & Mentor Support Channel.',
+    active: false
+  },
+  {
+    id: 'qr-3',
+    title: 'AUDITORIUM WI-FI & SCHEDULE',
+    url: 'https://vit.ac.in/hackatronics-schedule',
+    description: 'Scan to view the detailed 24-hour itinerary, meal timings, and Wi-Fi info.',
+    active: false
+  }
+];
+
+const DEFAULT_ANNOUNCEMENTS = [
+  {
+    id: 'ann-1',
+    title: 'WELCOME HACKERS!',
+    message: 'HACKATRONICS 2nd Edition has officially commenced at Nethaji Auditorium. Good luck!',
+    priority: 'info',
+    active: true,
+    createdAt: Date.now()
+  }
+];
+
+const DEFAULT_STATE = {
+  timer: {
+    durationSeconds: 86400, // 24 Hours default
+    remainingSeconds: 86400,
+    status: 'stopped', // 'stopped' | 'running' | 'paused' | 'completed'
+    targetEndTime: null,
+    overtimeSeconds: 0
+  },
+  eventInfo: DEFAULT_EVENT_INFO,
+  announcements: DEFAULT_ANNOUNCEMENTS,
+  qrCodes: DEFAULT_QR_CODES,
+  settings: {
+    bgMode: 'galaxy-animated', // 'galaxy-animated' | 'galaxy-static'
+    animationSpeed: 1.0, // 0.1 to 3.0 speed multiplier
+    audioEnabled: true,
+    showProgressRing: false,
+    showMilestones: true
+  }
+};
+
+export const TimerProvider = ({ children }) => {
+  // Load initial state from localStorage if available
+  const [appState, setAppState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure structure defaults exist
+        return {
+          ...DEFAULT_STATE,
+          ...parsed,
+          timer: { ...DEFAULT_STATE.timer, ...parsed.timer },
+          settings: { ...DEFAULT_STATE.settings, ...parsed.settings }
+        };
+      }
+    } catch (e) {
+      console.warn('Error reading saved state:', e);
+    }
+    return DEFAULT_STATE;
+  });
+
+  const broadcastChannelRef = useRef(null);
+  const milestoneSoundPlayedRef = useRef({});
+
+  // Broadcast state changes & save to localStorage
+  const updateAndSyncState = (updater) => {
+    setAppState((prev) => {
+      const nextState = typeof updater === 'function' ? updater(prev) : updater;
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+        if (broadcastChannelRef.current) {
+          broadcastChannelRef.current.postMessage({
+            type: 'STATE_UPDATE',
+            payload: nextState,
+            senderId: window.name || 'window_' + Math.random().toString(36).substring(7)
+          });
+        }
+      } catch (err) {
+        console.warn('Sync dispatch failed:', err);
+      }
+
+      return nextState;
+    });
+  };
+
+  // Setup BroadcastChannel and localStorage listeners for cross-window sync
+  useEffect(() => {
+    if ('BroadcastChannel' in window) {
+      const bc = new BroadcastChannel(SYNC_CHANNEL_NAME);
+      broadcastChannelRef.current = bc;
+
+      bc.onmessage = (event) => {
+        if (event.data && event.data.type === 'STATE_UPDATE') {
+          setAppState(event.data.payload);
+        }
+      };
+    }
+
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const newState = JSON.parse(e.newValue);
+          setAppState(newState);
+        } catch (err) {
+          console.warn('Storage sync parse failed:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (broadcastChannelRef.current) {
+        broadcastChannelRef.current.close();
+      }
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Timer Tick Engine: Calculates high-precision countdown based on targetEndTime
+  useEffect(() => {
+    if (appState.timer.status !== 'running') return;
+
+    const interval = setInterval(() => {
+      setAppState((prev) => {
+        if (prev.timer.status !== 'running' || !prev.timer.targetEndTime) return prev;
+
+        const now = Date.now();
+        const diffMs = prev.timer.targetEndTime - now;
+        const diffSec = Math.ceil(diffMs / 1000);
+
+        if (diffSec <= 0) {
+          // Timer finished! Trigger completion
+          const overtimeSec = Math.abs(diffSec);
+          
+          if (prev.settings.audioEnabled) {
+            playCompletionAlarm();
+          }
+
+          // Trigger confetti on auditorium screen
+          try {
+            confetti({
+              particleCount: 120,
+              spread: 90,
+              origin: { y: 0.6 }
+            });
+          } catch (e) {}
+
+          const next = {
+            ...prev,
+            timer: {
+              ...prev.timer,
+              remainingSeconds: 0,
+              status: 'completed',
+              overtimeSeconds: overtimeSec
+            }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          return next;
+        }
+
+        // Check Milestone Sounds (e.g. 1 hour, 30 mins, 15 mins, 5 mins remaining)
+        if (prev.settings.audioEnabled) {
+          const milestones = [3600, 1800, 900, 300, 60];
+          if (milestones.includes(diffSec) && !milestoneSoundPlayedRef.current[diffSec]) {
+            milestoneSoundPlayedRef.current[diffSec] = true;
+            if (diffSec <= 300) {
+              playWarningBeep();
+            } else {
+              playMilestoneChime();
+            }
+          }
+        }
+
+        const next = {
+          ...prev,
+          timer: {
+            ...prev.timer,
+            remainingSeconds: diffSec
+          }
+        };
+
+        return next;
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [appState.timer.status, appState.timer.targetEndTime, appState.settings.audioEnabled]);
+
+  // Timer Control Handler Functions
+  const startTimer = () => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => {
+      const remaining = prev.timer.remainingSeconds > 0 ? prev.timer.remainingSeconds : prev.timer.durationSeconds;
+      const targetEndTime = Date.now() + remaining * 1000;
+      
+      milestoneSoundPlayedRef.current = {};
+
+      return {
+        ...prev,
+        timer: {
+          ...prev.timer,
+          remainingSeconds: remaining,
+          status: 'running',
+          targetEndTime,
+          overtimeSeconds: 0
+        }
+      };
+    });
+  };
+
+  const pauseTimer = () => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => {
+      if (prev.timer.status !== 'running') return prev;
+
+      const now = Date.now();
+      const remainingMs = prev.timer.targetEndTime ? Math.max(0, prev.timer.targetEndTime - now) : prev.timer.remainingSeconds * 1000;
+      const remainingSec = Math.ceil(remainingMs / 1000);
+
+      return {
+        ...prev,
+        timer: {
+          ...prev.timer,
+          remainingSeconds: remainingSec,
+          status: 'paused',
+          targetEndTime: null
+        }
+      };
+    });
+  };
+
+  const resumeTimer = () => {
+    startTimer();
+  };
+
+  const resetTimer = () => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => ({
+      ...prev,
+      timer: {
+        ...prev.timer,
+        remainingSeconds: prev.timer.durationSeconds,
+        status: 'stopped',
+        targetEndTime: null,
+        overtimeSeconds: 0
+      }
+    }));
+  };
+
+  const stopTimer = () => {
+    resetTimer();
+  };
+
+  const setTimerValue = (totalSeconds) => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    const sec = Math.max(0, parseInt(totalSeconds, 10) || 0);
+    updateAndSyncState((prev) => {
+      const isRunning = prev.timer.status === 'running';
+      const targetEndTime = isRunning ? Date.now() + sec * 1000 : null;
+
+      return {
+        ...prev,
+        timer: {
+          ...prev.timer,
+          durationSeconds: sec,
+          remainingSeconds: sec,
+          targetEndTime,
+          overtimeSeconds: 0
+        }
+      };
+    });
+  };
+
+  const addTimeSeconds = (additionalSeconds) => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => {
+      const newRemaining = Math.max(0, prev.timer.remainingSeconds + additionalSeconds);
+      const isRunning = prev.timer.status === 'running';
+      const targetEndTime = isRunning ? Date.now() + newRemaining * 1000 : null;
+
+      return {
+        ...prev,
+        timer: {
+          ...prev.timer,
+          durationSeconds: Math.max(prev.timer.durationSeconds, newRemaining),
+          remainingSeconds: newRemaining,
+          targetEndTime
+        }
+      };
+    });
+  };
+
+  // Event Info Customizer
+  const updateEventInfo = (newInfo) => {
+    updateAndSyncState((prev) => ({
+      ...prev,
+      eventInfo: { ...prev.eventInfo, ...newInfo }
+    }));
+  };
+
+  // Announcement Handlers
+  const addAnnouncement = (title, message, priority = 'info') => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => {
+      const newAnn = {
+        id: 'ann-' + Date.now(),
+        title,
+        message,
+        priority,
+        active: true,
+        createdAt: Date.now()
+      };
+      return {
+        ...prev,
+        announcements: [newAnn, ...prev.announcements]
+      };
+    });
+  };
+
+  const toggleAnnouncementActive = (id) => {
+    updateAndSyncState((prev) => ({
+      ...prev,
+      announcements: prev.announcements.map((ann) =>
+        ann.id === id ? { ...ann, active: !ann.active } : ann
+      )
+    }));
+  };
+
+  const deleteAnnouncement = (id) => {
+    updateAndSyncState((prev) => ({
+      ...prev,
+      announcements: prev.announcements.filter((ann) => ann.id !== id)
+    }));
+  };
+
+  // QR Code Handlers
+  const addOrUpdateQRCode = (qrCodeData) => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => {
+      const exists = prev.qrCodes.some((q) => q.id === qrCodeData.id);
+      let updatedQRs;
+      if (exists) {
+        updatedQRs = prev.qrCodes.map((q) => (q.id === qrCodeData.id ? { ...q, ...qrCodeData } : q));
+      } else {
+        const newQR = { ...qrCodeData, id: 'qr-' + Date.now(), active: false };
+        updatedQRs = [...prev.qrCodes, newQR];
+      }
+      return {
+        ...prev,
+        qrCodes: updatedQRs
+      };
+    });
+  };
+
+  const toggleQRCodeActive = (id) => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => ({
+      ...prev,
+      qrCodes: prev.qrCodes.map((qr) => ({
+        ...qr,
+        active: qr.id === id ? !qr.active : false // Only 1 active QR overlay at a time
+      }))
+    }));
+  };
+
+  const deleteQRCode = (id) => {
+    updateAndSyncState((prev) => ({
+      ...prev,
+      qrCodes: prev.qrCodes.filter((qr) => qr.id !== id)
+    }));
+  };
+
+  // Settings Handlers
+  const updateSettings = (newSettings) => {
+    if (appState.settings.audioEnabled) playButtonSound();
+
+    updateAndSyncState((prev) => ({
+      ...prev,
+      settings: { ...prev.settings, ...newSettings }
+    }));
+  };
+
+  return (
+    <TimerContext.Provider
+      value={{
+        ...appState,
+        startTimer,
+        pauseTimer,
+        resumeTimer,
+        resetTimer,
+        stopTimer,
+        setTimerValue,
+        addTimeSeconds,
+        updateEventInfo,
+        addAnnouncement,
+        toggleAnnouncementActive,
+        deleteAnnouncement,
+        addOrUpdateQRCode,
+        toggleQRCodeActive,
+        deleteQRCode,
+        updateSettings
+      }}
+    >
+      {children}
+    </TimerContext.Provider>
+  );
+};
+
+export const useTimer = () => {
+  const context = useContext(TimerContext);
+  if (!context) {
+    throw new Error('useTimer must be used within a TimerProvider');
+  }
+  return context;
+};
