@@ -13,7 +13,7 @@ setTimeout(() => {
   console.log('\n🌐 Opening Auditorium Display & Organizer Control Panel in browser...\n');
 
   const displayUrl = 'http://localhost:5173/';
-  const controlUrl = 'http://localhost:5173/?view=control';
+  const controlUrl = 'http://localhost:5173/panel';
 
   if (process.platform === 'win32') {
     exec(`start "" "${displayUrl}"`);

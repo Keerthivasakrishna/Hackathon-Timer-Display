@@ -1,8 +1,8 @@
 import React from 'react';
-import { Tv, LayoutDashboard, Maximize, Radio, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Tv, LayoutDashboard, Maximize, Radio, Volume2, VolumeX, LogOut } from 'lucide-react';
 import { useTimer } from '../../context/TimerContext';
 
-const Navbar = ({ currentView, setCurrentView }) => {
+const Navbar = ({ currentView, setCurrentView, onLogout }) => {
   const { settings, updateSettings } = useTimer();
 
   const toggleFullscreen = () => {
@@ -86,6 +86,18 @@ const Navbar = ({ currentView, setCurrentView }) => {
         >
           <Maximize className="w-4 h-4" />
         </button>
+
+        {/* Logout Button */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Logout from Organizer Panel"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-500/40 text-red-300 text-xs font-bold transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5 text-red-400" />
+            <span className="hidden md:inline">LOGOUT</span>
+          </button>
+        )}
       </div>
     </nav>
   );
