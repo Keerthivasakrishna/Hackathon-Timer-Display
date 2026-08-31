@@ -1,5 +1,8 @@
-// SHA-256 Salted Cryptographic Hash of 'keerthi:eggpuff@123:hackatronics_2026_salt'
-const EXPECTED_CREDENTIAL_HASH = 'd9a91f44cbd792b724b27ec326ae4337619e338ba67bb71fe4ba7b72fb897bd9';
+// SHA-256 Salted Cryptographic Hashes of authorized organizer credentials
+const ALLOWED_CREDENTIAL_HASHES = [
+  'a61f47a4d6e05ec3e65a37d5b54c2e606db17c831388ae2b4555db09095dd4bd', // keerthi : eggpuff
+  'f6fffcceb893d69f10adc4b324e7531180658ad6e78736666f98026377ed61d8'  // admin : coldcoffee
+];
 const SALT = 'hackatronics_2026_salt';
 const SESSION_KEY = 'hackatronics_admin_session_v1';
 
@@ -22,7 +25,7 @@ export async function computeHash(username, password) {
 export async function authenticateUser(username, password, rememberMe = true) {
   try {
     const hash = await computeHash(username, password);
-    if (hash === EXPECTED_CREDENTIAL_HASH) {
+    if (ALLOWED_CREDENTIAL_HASHES.includes(hash)) {
       const sessionData = {
         username: (username || '').trim().toLowerCase(),
         token: 'auth_' + Math.random().toString(36).substring(2) + '_' + Date.now(),
