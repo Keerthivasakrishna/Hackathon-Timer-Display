@@ -60,12 +60,16 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
         {eventInfo?.subtitle || '24-HOURS HACKATHON'}
       </div>
 
-      {/* Main Title HACKTRONICS */}
-      <h1 className={`font-orbitron font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-white via-purple-100 to-purple-300 glow-purple-lg uppercase transition-all duration-500 ${
-        isCompact ? 'text-3xl md:text-5xl my-0.5' : 'text-5xl md:text-7xl lg:text-8xl my-1'
-      }`}>
-        {eventInfo?.title || 'HACKTRONICS'}
-      </h1>
+      {/* Main Title HACKTRONICS Artwork */}
+      <img
+        src="/assets/static/hacktronics-logo.png"
+        alt={eventInfo?.title || 'HACKTRONICS'}
+        className={`object-contain w-auto transition-all duration-500 ${
+          isCompact
+            ? 'h-10 md:h-14 max-w-md my-0.5'
+            : 'h-16 sm:h-24 md:h-28 lg:h-32 max-w-3xl lg:max-w-4xl my-1'
+        }`}
+      />
 
       {/* Edition Subtitle */}
       <div className="flex items-center gap-4 text-xs md:text-sm font-bold tracking-[0.3em] text-purple-300 uppercase">
