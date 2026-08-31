@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import confetti from 'canvas-confetti';
 import { playMilestoneChime, playWarningBeep, playCompletionAlarm, playButtonSound } from '../utils/audioSynth';
 
+import { pushStateToCloud, subscribeToCloudState, fetchInitialCloudState } from '../utils/firebaseSync';
+
 const TimerContext = createContext(null);
 
 const SYNC_CHANNEL_NAME = 'hackatronics_display_sync_channel';
@@ -96,7 +98,7 @@ export const TimerProvider = ({ children }) => {
   const broadcastChannelRef = useRef(null);
   const milestoneSoundPlayedRef = useRef({});
 
-  // Broadcast state changes & save to localStorage
+  // Broadcast state changes, save to localStorage & push to Realtime Cloud
   const updateAndSyncState = (updater) => {
     setAppState((prev) => {
       const nextState = typeof updater === 'function' ? updater(prev) : updater;
@@ -114,12 +116,69 @@ export const TimerProvider = ({ children }) => {
         console.warn('Sync dispatch failed:', err);
       }
 
+      // Push to Realtime Cloud DB for cross-device sync
+      pushStateToCloud(nextState);
+
       return nextState;
     });
   };
 
-  // Setup BroadcastChannel and localStorage listeners for cross-window sync
+  // Setup Cloud Realtime Sync, BroadcastChannel and localStorage listeners for cross-device sync
   useEffect(() => {
+    // 1. Initial Cloud Sync Fetch on Mount
+    fetchInitialCloudState().then((cloudState) => {
+      if (cloudState) {
+        setAppState((prev) => {
+          // Keep structure defaults intact
+          const merged = {
+            ...DEFAULT_STATE,
+            ...cloudState,
+            timer: { ...DEFAULT_STATE.timer, ...(cloudState.timer || {}) },
+            settings: { ...DEFAULT_STATE.settings, ...(cloudState.settings || {}) }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          return merged;
+        });
+      }
+    });
+
+    // 2. Subscribe to Realtime Cloud State Updates across devices
+    const unsubCloud = subscribeToCloudState((cloudState) => {
+      if (cloudState) {
+        setAppState((prev) => {
+          const merged = {
+            ...DEFAULT_STATE,
+            ...cloudState,
+            timer: { ...DEFAULT_STATE.timer, ...(cloudState.timer || {}) },
+            settings: { ...DEFAULT_STATE.settings, ...(cloudState.settings || {}) }
+          };
+
+          // Compare stringified states to avoid redundant re-renders
+          const currentStr = JSON.stringify({
+            timer: prev.timer,
+            eventInfo: prev.eventInfo,
+            announcements: prev.announcements,
+            qrCodes: prev.qrCodes,
+            settings: prev.settings
+          });
+
+          const incomingStr = JSON.stringify({
+            timer: merged.timer,
+            eventInfo: merged.eventInfo,
+            announcements: merged.announcements,
+            qrCodes: merged.qrCodes,
+            settings: merged.settings
+          });
+
+          if (currentStr === incomingStr) return prev;
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          return merged;
+        });
+      }
+    });
+
+    // 3. Local BroadcastChannel setup for tab sync on same device
     if ('BroadcastChannel' in window) {
       const bc = new BroadcastChannel(SYNC_CHANNEL_NAME);
       broadcastChannelRef.current = bc;
@@ -131,6 +190,7 @@ export const TimerProvider = ({ children }) => {
       };
     }
 
+    // 4. LocalStorage event listener
     const handleStorageChange = (e) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
@@ -145,6 +205,7 @@ export const TimerProvider = ({ children }) => {
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      if (unsubCloud) unsubCloud();
       if (broadcastChannelRef.current) {
         broadcastChannelRef.current.close();
       }

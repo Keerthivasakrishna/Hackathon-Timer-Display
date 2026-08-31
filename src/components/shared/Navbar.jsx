@@ -32,7 +32,7 @@ const Navbar = ({ currentView, setCurrentView, onLogout }) => {
 
         <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-500/30 text-[10px] text-purple-300 font-mono">
           <Radio className="w-3 h-3 text-purple-400 animate-pulse" />
-          <span>CROSS-WINDOW SYNC ACTIVE</span>
+          <span>REALTIME CLOUD SYNC ACTIVE</span>
         </div>
       </div>
 

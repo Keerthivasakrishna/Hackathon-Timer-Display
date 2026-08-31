@@ -32,7 +32,7 @@ const ControlPanel = () => {
               </span>
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
                 <Radio className="w-3 h-3 animate-pulse" />
-                <span>LIVE SYNC ACTIVE</span>
+                <span>REALTIME CLOUD SYNC ACTIVE</span>
               </div>
             </div>
             <h1 className="font-orbitron font-black text-2xl md:text-3xl tracking-wider text-white uppercase mt-1">
