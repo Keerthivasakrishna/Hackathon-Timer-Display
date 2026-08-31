@@ -49,7 +49,7 @@ const DEFAULT_ANNOUNCEMENTS = [
     title: 'WELCOME HACKERS!',
     message: 'HACKTRONICS 2nd Edition has officially commenced at Kamaraj Auditorium. Good luck!',
     priority: 'info',
-    active: true,
+    active: false,
     createdAt: Date.now()
   }
 ];

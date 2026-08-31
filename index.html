@@ -11,7 +11,78 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="bg-black text-white antialiased overflow-x-hidden selection:bg-purple-600 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant HTML Preloader for Netlify CDN (Square Tech Theme) -->
+      <style>
+        #preloader-fallback {
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          background-color: #04020a;
+          color: #ffffff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          font-family: 'Inter', sans-serif;
+        }
+        .square-card {
+          position: relative;
+          padding: 32px;
+          border-radius: 24px;
+          background: rgba(0, 0, 0, 0.8);
+          border: 1px solid rgba(168, 85, 247, 0.4);
+          box-shadow: 0 0 50px rgba(168, 85, 247, 0.25);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          max-width: 380px;
+          width: 90%;
+        }
+        .square-loader {
+          width: 48px;
+          height: 48px;
+          border: 2px solid rgba(168, 85, 247, 0.3);
+          border-top-color: #c084fc;
+          border-right-color: #a855f7;
+          border-radius: 12px;
+          animation: spinSquare 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          margin-bottom: 20px;
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+        @keyframes spinSquare {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .loader-title {
+          font-family: 'Orbitron', sans-serif;
+          font-size: 20px;
+          font-weight: 900;
+          letter-spacing: 0.15em;
+          color: #ffffff;
+          margin-bottom: 6px;
+          text-shadow: 0 0 15px rgba(192, 132, 252, 0.8);
+          text-transform: uppercase;
+        }
+        .loader-subtitle {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.25em;
+          color: #c084fc;
+          text-transform: uppercase;
+          opacity: 0.85;
+        }
+      </style>
+      <div id="preloader-fallback">
+        <div class="square-card">
+          <div class="square-loader"></div>
+          <div class="loader-title">HACKTRONICS</div>
+          <div class="loader-subtitle">2ND EDITION • STAGE DISPLAY</div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

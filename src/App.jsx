@@ -4,9 +4,11 @@ import AuditoriumDisplay from './components/display/AuditoriumDisplay';
 import ControlPanel from './components/control/ControlPanel';
 import PanelLoginForm from './components/control/PanelLoginForm';
 import Navbar from './components/shared/Navbar';
+import LoadingScreen from './components/shared/LoadingScreen';
 import { checkAuthStatus, logoutUser } from './utils/auth';
 
 function AppContent() {
+  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(() => checkAuthStatus());
 
   const [currentView, setCurrentView] = useState(() => {
@@ -72,6 +74,9 @@ function AppContent() {
 
   return (
     <div className="relative min-h-screen w-screen overflow-x-hidden bg-black text-white select-none">
+      {/* Initial App & Netlify Hosting Asset Preloader Screen */}
+      {isLoading && <LoadingScreen onFinish={() => setIsLoading(false)} />}
+
       {/* Navbar is shown when on Control Panel view and authenticated */}
       {currentView === 'control' && isAuthenticated && (
         <Navbar
