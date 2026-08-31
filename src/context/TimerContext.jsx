@@ -146,12 +146,23 @@ export const TimerProvider = ({ children }) => {
     const unsubCloud = subscribeToCloudState((cloudState) => {
       if (cloudState) {
         setAppState((prev) => {
+          const mergedTimer = { ...cloudState.timer };
+          if (mergedTimer.status === 'running' && mergedTimer.targetEndTime) {
+            const calcSec = Math.max(0, Math.ceil((mergedTimer.targetEndTime - Date.now()) / 1000));
+            mergedTimer.remainingSeconds = calcSec;
+          }
+
           const merged = {
             ...DEFAULT_STATE,
             ...cloudState,
-            timer: { ...DEFAULT_STATE.timer, ...(cloudState.timer || {}) },
+            timer: { ...DEFAULT_STATE.timer, ...mergedTimer },
             settings: { ...DEFAULT_STATE.settings, ...(cloudState.settings || {}) }
           };
+
+          // Maintain smooth local countdown if targetEndTime is identical
+          if (prev.timer.status === 'running' && merged.timer.status === 'running' && prev.timer.targetEndTime === merged.timer.targetEndTime) {
+            merged.timer.remainingSeconds = prev.timer.remainingSeconds;
+          }
 
           // Compare stringified states to avoid redundant re-renders
           const currentStr = JSON.stringify({
@@ -223,7 +234,12 @@ export const TimerProvider = ({ children }) => {
 
         const now = Date.now();
         const diffMs = prev.timer.targetEndTime - now;
-        const diffSec = Math.ceil(diffMs / 1000);
+        const diffSec = Math.max(0, Math.ceil(diffMs / 1000));
+
+        // Optimization: Only update state when remainingSeconds integer changes
+        if (prev.timer.remainingSeconds === diffSec && diffSec > 0) {
+          return prev;
+        }
 
         if (diffSec <= 0) {
           // Timer finished! Trigger completion

@@ -71,10 +71,7 @@ const AnimatedStarfield = ({ speedMultiplier = 1.0 }) => {
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fillStyle = star.color;
         ctx.globalAlpha = Math.max(0.1, Math.min(1, star.alpha));
-        ctx.shadowBlur = star.radius * 4;
-        ctx.shadowColor = star.color;
         ctx.fill();
-        ctx.shadowBlur = 0;
       });
 
       // Render Drifting Cosmic Dust Particles
