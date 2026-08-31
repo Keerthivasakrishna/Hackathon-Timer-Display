@@ -3,7 +3,7 @@ import React from 'react';
 const HeaderLogos = ({ eventInfo, isCompact = false }) => {
   return (
     <div className={`flex flex-col items-center justify-center w-full z-10 transition-all duration-500 ${
-      isCompact ? 'py-1 scale-90' : 'pt-4 pb-2'
+      isCompact ? 'py-1' : 'pt-4 pb-2'
     }`}>
       {/* Top IEEE & VIT Seamlessly Blended Logos */}
       <div className="flex items-center justify-center gap-6 md:gap-12 max-w-5xl w-full px-4 mb-2">
@@ -66,7 +66,7 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
         alt={eventInfo?.title || 'HACKTRONICS'}
         className={`object-contain w-auto transition-all duration-500 ${
           isCompact
-            ? 'h-10 md:h-14 max-w-md my-0.5'
+            ? 'h-14 sm:h-18 md:h-20 lg:h-24 max-w-xl my-0.5'
             : 'h-16 sm:h-24 md:h-28 lg:h-32 max-w-3xl lg:max-w-4xl my-1'
         }`}
       />
