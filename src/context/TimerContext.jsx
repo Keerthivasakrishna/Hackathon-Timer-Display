@@ -8,10 +8,10 @@ const SYNC_CHANNEL_NAME = 'hackatronics_display_sync_channel';
 const STORAGE_KEY = 'hackatronics_display_state_v1';
 
 const DEFAULT_EVENT_INFO = {
-  title: 'HACKATRONICS',
+  title: 'HACKTRONICS',
   edition: '2ND EDITION',
   subtitle: '24-HOURS HACKATHON',
-  venue: 'NETHAJI AUDITORIUM, VIT CHENNAI',
+  venue: 'KAMARAJ AUDITORIUM, VIT CHENNAI',
   date: '01.09.2026',
   timeRange: '8 AM - 8 AM',
   pillars: ['BUILD', 'INNOVATE', 'CREATE', 'DEPLOY']
@@ -21,21 +21,21 @@ const DEFAULT_QR_CODES = [
   {
     id: 'qr-1',
     title: 'PROJECT SUBMISSION LINK',
-    url: 'https://hackatronics2026.devpost.com',
+    url: 'https://hacktronics2026.devpost.com',
     description: 'Scan to submit your final GitHub repo, project pitch, and demo video.',
     active: false
   },
   {
     id: 'qr-2',
     title: 'HACKER DISCORD COMMUNITY',
-    url: 'https://discord.gg/hackatronics',
+    url: 'https://discord.gg/hacktronics',
     description: 'Scan to join the official Hacker Helpdesk & Mentor Support Channel.',
     active: false
   },
   {
     id: 'qr-3',
     title: 'AUDITORIUM WI-FI & SCHEDULE',
-    url: 'https://vit.ac.in/hackatronics-schedule',
+    url: 'https://vit.ac.in/hacktronics-schedule',
     description: 'Scan to view the detailed 24-hour itinerary, meal timings, and Wi-Fi info.',
     active: false
   }
@@ -45,7 +45,7 @@ const DEFAULT_ANNOUNCEMENTS = [
   {
     id: 'ann-1',
     title: 'WELCOME HACKERS!',
-    message: 'HACKATRONICS 2nd Edition has officially commenced at Nethaji Auditorium. Good luck!',
+    message: 'HACKTRONICS 2nd Edition has officially commenced at Kamaraj Auditorium. Good luck!',
     priority: 'info',
     active: true,
     createdAt: Date.now()

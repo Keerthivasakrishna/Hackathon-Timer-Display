@@ -40,7 +40,7 @@ const EventFooter = ({ eventInfo, isCompact = false }) => {
             <MapPin className="w-3.5 h-3.5" />
           </div>
           <span className="tracking-wider uppercase font-semibold text-white">
-            {eventInfo?.venue || 'NETHAJI AUDITORIUM, VIT CHENNAI'}
+            {eventInfo?.venue || 'KAMARAJ AUDITORIUM, VIT CHENNAI'}
           </span>
         </div>
 

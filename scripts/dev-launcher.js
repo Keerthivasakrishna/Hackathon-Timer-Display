@@ -1,6 +1,6 @@
 import { spawn, exec } from 'child_process';
 
-console.log('\n🚀 Starting HACKATRONICS 2nd Edition Dev Server...\n');
+console.log('\n🚀 Starting HACKTRONICS 2nd Edition Dev Server...\n');
 
 // Start Vite server
 const vite = spawn('npx', ['vite', '--port', '5173'], {

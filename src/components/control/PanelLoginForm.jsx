@@ -58,7 +58,7 @@ const PanelLoginForm = ({ onLoginSuccess, onReturnToDisplay }) => {
             <span>ORGANIZER PORTAL</span>
           </div>
           <h2 className="text-2xl font-bold font-orbitron tracking-wide text-white">
-            HACKATRONICS <span className="text-purple-400">2.0</span>
+            HACKTRONICS <span className="text-purple-400">2.0</span>
           </h2>
           <p className="text-xs text-gray-400 mt-1">
             Restricted Access • Authenticate to manage display & timer

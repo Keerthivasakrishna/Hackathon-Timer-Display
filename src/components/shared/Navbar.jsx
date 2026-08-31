@@ -26,7 +26,7 @@ const Navbar = ({ currentView, setCurrentView, onLogout }) => {
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping"></div>
           <span className="font-orbitron font-bold text-sm tracking-wider text-white">
-            HACKATRONICS <span className="text-purple-400 text-xs font-semibold">2ND EDITION</span>
+            HACKTRONICS <span className="text-purple-400 text-xs font-semibold">2ND EDITION</span>
           </span>
         </div>
 

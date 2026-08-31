@@ -36,7 +36,7 @@ const ControlPanel = () => {
               </div>
             </div>
             <h1 className="font-orbitron font-black text-2xl md:text-3xl tracking-wider text-white uppercase mt-1">
-              {eventInfo?.title || 'HACKATRONICS'} CONTROL PANEL
+              {eventInfo?.title || 'HACKTRONICS'} CONTROL PANEL
             </h1>
           </div>
         </div>
