@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import confetti from 'canvas-confetti';
 import { playMilestoneChime, playWarningBeep, playCompletionAlarm, playButtonSound } from '../utils/audioSynth';
 
-import { pushStateToCloud, subscribeToCloudState, fetchInitialCloudState } from '../utils/firebaseSync';
+import { pushStateToCloud, subscribeToCloudState, fetchInitialCloudState } from '../utils/cloudSync';
 
 const TimerContext = createContext(null);
 
