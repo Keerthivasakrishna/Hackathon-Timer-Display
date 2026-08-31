@@ -1,118 +1,151 @@
 import mqtt from 'mqtt';
 
+const NTFY_URL = 'https://ntfy.sh/hacktronics_2026_live_state_v2';
 const MQTT_BROKERS = [
   'wss://broker.emqx.io:8084/mqtt',
   'wss://broker.hivemq.com:8000/mqtt'
 ];
+const MQTT_TOPIC = 'hacktronics_2026_live_state_v2';
+const DEVICE_ID = 'device_' + Math.random().toString(36).substring(2, 9);
 
-const TOPIC_NAME = 'hacktronics_2026_live_state_v1';
-const DEVICE_ID = 'dev_' + Math.random().toString(36).substring(2, 9);
-
-let client = null;
-let latestStateCache = null;
-let listenerCallback = null;
-let currentBrokerIdx = 0;
-
-function connectMQTT() {
-  if (client) return;
-
-  const brokerUrl = MQTT_BROKERS[currentBrokerIdx];
-
-  try {
-    client = mqtt.connect(brokerUrl, {
-      clientId: 'hacktronics_' + DEVICE_ID,
-      clean: true,
-      connectTimeout: 5000,
-      reconnectPeriod: 3000
-    });
-
-    client.on('connect', () => {
-      console.log('⚡ Connected to Realtime Cloud Sync via', brokerUrl);
-      client.subscribe(TOPIC_NAME, { qos: 1 }, (err) => {
-        if (err) console.warn('MQTT subscribe warning:', err);
-      });
-    });
-
-    client.on('message', (topic, message) => {
-      if (topic === TOPIC_NAME) {
-        try {
-          const parsed = JSON.parse(message.toString());
-          if (parsed && parsed.payload) {
-            // Ignore self-dispatched messages if already applied locally
-            if (parsed.senderId === DEVICE_ID) return;
-
-            latestStateCache = parsed.payload;
-            if (listenerCallback) {
-              listenerCallback(parsed.payload);
-            }
-          }
-        } catch (e) {
-          console.warn('MQTT parse warning:', e);
-        }
-      }
-    });
-
-    client.on('error', (err) => {
-      console.warn('MQTT connection notice:', err.message);
-      // Switch broker if error occurs
-      switchBroker();
-    });
-  } catch (err) {
-    console.warn('MQTT init notice:', err);
-  }
-}
-
-function switchBroker() {
-  if (client) {
-    try { client.end(true); } catch (e) {}
-    client = null;
-  }
-  currentBrokerIdx = (currentBrokerIdx + 1) % MQTT_BROKERS.length;
-  setTimeout(connectMQTT, 1000);
-}
-
-// Auto connect on import
-connectMQTT();
+let mqttClient = null;
+let latestCloudState = null;
+let listenerCallbacks = new Set();
+let eventSource = null;
 
 /**
- * Pushes updated state to Realtime Cloud for instant cross-device broadcast
+ * Initializes MQTT & SSE connection
  */
-export function pushStateToCloud(state) {
-  if (!client || !client.connected) {
-    connectMQTT();
+function initRealtimeConnections() {
+  // 1. MQTT Connection
+  if (!mqttClient) {
+    try {
+      mqttClient = mqtt.connect(MQTT_BROKERS[0], {
+        clientId: 'hacktronics_' + DEVICE_ID,
+        clean: true,
+        connectTimeout: 4000,
+        reconnectPeriod: 2000
+      });
+
+      mqttClient.on('connect', () => {
+        mqttClient.subscribe(MQTT_TOPIC, { qos: 1 });
+      });
+
+      mqttClient.on('message', (topic, message) => {
+        if (topic === MQTT_TOPIC) {
+          try {
+            const parsed = JSON.parse(message.toString());
+            if (parsed && parsed.payload) {
+              if (parsed.senderId === DEVICE_ID) return;
+              handleIncomingState(parsed.payload);
+            }
+          } catch (e) {}
+        }
+      });
+    } catch (e) {
+      console.warn('MQTT init notice:', e);
+    }
   }
 
-  const payloadStr = JSON.stringify({
+  // 2. EventSource (SSE) Connection for ntfy.sh instant fallback
+  if (!eventSource && typeof window !== 'undefined' && 'EventSource' in window) {
+    try {
+      eventSource = new EventSource(`${NTFY_URL}/sse`);
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.message) {
+            const parsed = JSON.parse(data.message);
+            if (parsed && parsed.payload) {
+              if (parsed.senderId === DEVICE_ID) return;
+              handleIncomingState(parsed.payload);
+            }
+          }
+        } catch (e) {}
+      };
+    } catch (e) {
+      console.warn('SSE notice:', e);
+    }
+  }
+}
+
+function handleIncomingState(payload) {
+  latestCloudState = payload;
+  listenerCallbacks.forEach((cb) => {
+    try { cb(payload); } catch (e) {}
+  });
+}
+
+// Auto init connections
+initRealtimeConnections();
+
+/**
+ * Pushes updated state from Control Panel to Cloud (dual-layer push)
+ */
+export async function pushStateToCloud(state) {
+  const payloadObj = {
     senderId: DEVICE_ID,
     timestamp: Date.now(),
     payload: state
-  });
+  };
 
+  const jsonString = JSON.stringify(payloadObj);
+
+  // Layer 1: Push to ntfy.sh REST endpoint
   try {
-    if (client && client.connected) {
-      client.publish(TOPIC_NAME, payloadStr, { qos: 1, retain: true });
+    fetch(NTFY_URL, {
+      method: 'POST',
+      body: jsonString,
+      headers: { 'Title': 'HACKTRONICS_STATE_UPDATE' }
+    }).catch(() => {});
+  } catch (e) {}
+
+  // Layer 2: Push to MQTT WebSockets
+  try {
+    if (mqttClient && mqttClient.connected) {
+      mqttClient.publish(MQTT_TOPIC, jsonString, { qos: 1, retain: true });
+    } else {
+      initRealtimeConnections();
     }
-  } catch (err) {
-    console.warn('Cloud dispatch notice:', err);
-  }
+  } catch (e) {}
 }
 
 /**
  * Subscribes to Realtime Cloud state broadcasts across all devices
  */
 export function subscribeToCloudState(callback) {
-  listenerCallback = callback;
-  if (latestStateCache) {
-    callback(latestStateCache);
+  listenerCallbacks.add(callback);
+  if (latestCloudState) {
+    callback(latestCloudState);
   }
   return () => {
-    listenerCallback = null;
+    listenerCallbacks.delete(callback);
   };
 }
 
 /**
- * Gets cached cloud state
+ * Fetches the initial cloud state on page load via instant HTTPS poll
  */
-export function fetchInitialCloudState() {
-  return Promise.resolve(latestStateCache);
+export async function fetchInitialCloudState() {
+  try {
+    const res = await fetch(`${NTFY_URL}/json?poll=1`);
+    if (res.ok) {
+      const text = await res.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+      if (lines.length > 0) {
+        const lastLine = lines[lines.length - 1];
+        const data = JSON.parse(lastLine);
+        if (data && data.message) {
+          const parsed = JSON.parse(data.message);
+          if (parsed && parsed.payload) {
+            latestCloudState = parsed.payload;
+            return parsed.payload;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Initial cloud fetch notice:', err);
+  }
+  return latestCloudState;
 }

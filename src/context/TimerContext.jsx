@@ -503,7 +503,8 @@ export const TimerProvider = ({ children }) => {
         addOrUpdateQRCode,
         toggleQRCodeActive,
         deleteQRCode,
-        updateSettings
+        updateSettings,
+        syncStateNow: () => pushStateToCloud(appState)
       }}
     >
       {children}

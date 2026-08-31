@@ -11,7 +11,16 @@ import { LayoutDashboard, Radio } from 'lucide-react';
 const formatTwoDigits = (num) => String(Math.max(0, num)).padStart(2, '0');
 
 const ControlPanel = () => {
-  const { timer, eventInfo } = useTimer();
+  const { timer, eventInfo, syncStateNow } = useTimer();
+
+  // Control Panel asserts its state as the Single Source of Truth to the cloud
+  React.useEffect(() => {
+    if (syncStateNow) syncStateNow();
+    const interval = setInterval(() => {
+      if (syncStateNow) syncStateNow();
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [syncStateNow]);
 
   const hours = Math.floor(timer.remainingSeconds / 3600);
   const minutes = Math.floor((timer.remainingSeconds % 3600) / 60);
