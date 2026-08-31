@@ -34,7 +34,7 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
           <img
             src="/assets/static/logo-sscs.png"
             alt="IEEE Solid-State Circuits Society"
-            className="h-full object-contain mix-blend-screen filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)] brightness-125 contrast-125"
+            className="h-full object-contain filter drop-shadow-[0_0_14px_rgba(192,132,252,0.9)] brightness-110"
           />
         </div>
 
