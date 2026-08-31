@@ -5,10 +5,10 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
     <div className={`flex flex-col items-center justify-center w-full z-10 transition-all duration-500 ${
       isCompact ? 'py-1 scale-90' : 'pt-4 pb-2'
     }`}>
-      {/* Top IEEE, HACKTRONICS Emblem & VIT Logos */}
-      <div className="flex items-center justify-center gap-4 md:gap-8 max-w-5xl w-full px-4 mb-2">
+      {/* Top IEEE & VIT Seamlessly Blended Logos */}
+      <div className="flex items-center justify-center gap-6 md:gap-12 max-w-5xl w-full px-4 mb-2">
         {/* IEEE Photonics Logo */}
-        <div className="flex items-center justify-center h-8 md:h-11">
+        <div className="flex items-center justify-center h-10 md:h-12">
           <img
             src="/assets/static/logo-photonics.png"
             alt="IEEE Photonics Society"
@@ -16,10 +16,10 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
           />
         </div>
 
-        <div className="h-7 w-[1px] bg-purple-500/40"></div>
+        <div className="h-8 w-[1px] bg-purple-500/40"></div>
 
-        {/* VIT Chennai Logo */}
-        <div className="flex items-center justify-center h-8 md:h-12">
+        {/* VIT Chennai Main Center Logo */}
+        <div className="flex items-center justify-center h-10 md:h-14">
           <img
             src="/assets/static/logo-vit.png"
             alt="VIT Chennai"
@@ -27,21 +27,10 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
           />
         </div>
 
-        <div className="h-7 w-[1px] bg-purple-500/40"></div>
-
-        {/* Custom HACKTRONICS Cyber Emblem */}
-        <div className="flex items-center justify-center h-10 md:h-14 transform hover:scale-110 transition-transform">
-          <img
-            src="/assets/static/hacktronics-emblem.svg"
-            alt="HACKTRONICS Emblem"
-            className="h-full object-contain filter drop-shadow-[0_0_16px_rgba(168,85,247,0.9)] animate-pulse"
-          />
-        </div>
-
-        <div className="h-7 w-[1px] bg-purple-500/40"></div>
+        <div className="h-8 w-[1px] bg-purple-500/40"></div>
 
         {/* IEEE SSCS Logo */}
-        <div className="flex items-center justify-center h-8 md:h-11">
+        <div className="flex items-center justify-center h-10 md:h-12">
           <img
             src="/assets/static/logo-sscs.png"
             alt="IEEE Solid-State Circuits Society"
@@ -49,10 +38,10 @@ const HeaderLogos = ({ eventInfo, isCompact = false }) => {
           />
         </div>
 
-        <div className="h-7 w-[1px] bg-purple-500/40"></div>
+        <div className="h-8 w-[1px] bg-purple-500/40"></div>
 
         {/* IEEE VTS Logo */}
-        <div className="flex items-center justify-center h-8 md:h-11">
+        <div className="flex items-center justify-center h-10 md:h-12">
           <img
             src="/assets/static/logo-vts.png"
             alt="IEEE VTS"
