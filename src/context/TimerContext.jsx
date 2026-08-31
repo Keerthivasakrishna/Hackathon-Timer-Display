@@ -164,9 +164,11 @@ export const TimerProvider = ({ children }) => {
             merged.timer.remainingSeconds = prev.timer.remainingSeconds;
           }
 
-          // Compare stringified states to avoid redundant re-renders
+          // Compare core structural data (excluding volatile tick seconds) to prevent UI glitching
           const currentStr = JSON.stringify({
-            timer: prev.timer,
+            timerStatus: prev.timer.status,
+            targetEndTime: prev.timer.targetEndTime,
+            durationSeconds: prev.timer.durationSeconds,
             eventInfo: prev.eventInfo,
             announcements: prev.announcements,
             qrCodes: prev.qrCodes,
@@ -174,7 +176,9 @@ export const TimerProvider = ({ children }) => {
           });
 
           const incomingStr = JSON.stringify({
-            timer: merged.timer,
+            timerStatus: merged.timer.status,
+            targetEndTime: merged.timer.targetEndTime,
+            durationSeconds: merged.timer.durationSeconds,
             eventInfo: merged.eventInfo,
             announcements: merged.announcements,
             qrCodes: merged.qrCodes,

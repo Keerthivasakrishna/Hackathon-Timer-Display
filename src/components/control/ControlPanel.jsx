@@ -13,14 +13,10 @@ const formatTwoDigits = (num) => String(Math.max(0, num)).padStart(2, '0');
 const ControlPanel = () => {
   const { timer, eventInfo, syncStateNow } = useTimer();
 
-  // Control Panel asserts its state as the Single Source of Truth to the cloud
+  // Control Panel asserts its state as the Single Source of Truth to the cloud on mount
   React.useEffect(() => {
     if (syncStateNow) syncStateNow();
-    const interval = setInterval(() => {
-      if (syncStateNow) syncStateNow();
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [syncStateNow]);
+  }, []);
 
   const hours = Math.floor(timer.remainingSeconds / 3600);
   const minutes = Math.floor((timer.remainingSeconds % 3600) / 60);
